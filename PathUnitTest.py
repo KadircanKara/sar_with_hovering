@@ -1,0 +1,354 @@
+import time
+from statistics import median, median_low, median_high
+import pickle
+from scipy import io
+import numpy as np
+
+from PathInfo import *
+from PathProblem import PathProblem
+from PathSampling import PathSampling
+from PathSolution import *
+# from PathRepair import *
+from PathAlgorithm import *
+# from PathResult import *
+# from PathOutput import *
+
+
+from pymoo.operators.crossover.nox import NoCrossover
+from pymoo.operators.mutation.nom import NoMutation
+from pymoo.core.duplicate import NoDuplicateElimination
+
+
+from pymoo.algorithms.moo.nsga3 import NSGA3
+from pymoo.util.ref_dirs import get_reference_directions
+from pymoo.optimize import minimize
+
+from pymoo.termination.default import DefaultMultiObjectiveTermination
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Hovering yazılacak
+# Hovering olmazsa disconnecitivty min. edilebilir. (Bağlanıp çıkıp bağlanıp çıkabilir)
+# BS 0. cell'e çekilecek.
+
+# import tkinter
+# import fractions as f
+
+# root   = tkinter.Tk()
+
+# width  = root.winfo_screenwidth()
+# height = root.winfo_screenheight()
+# frac   = f.Fraction(width,height)
+
+# print ("WIDTH-HEIGHT:",width, height)
+
+# if width==1280 and height==800 :
+#     {"terminal.integrated.fontSize": 12,
+#     "editor.fontSize": 12}
+# else :
+#     {"terminal.integrated.fontSize": 16,
+#     "editor.fontSize": 16}
+
+
+# -------------    AUTO    -----------------------------------
+
+# class PathUnitTest:
+#
+#     def __init__(self, alg_list=None, setups=None):
+#
+#         # self.path = "/Users/kadircan/Documents/MATLAB/Thesis/"
+#         self.alg_list = alg_list if alg_list else ['NSGA2']
+#         self.setups = setups if setups else [PathInfo()]
+#         self.algorithm_list = []
+#         self.result = dict()
+#         self.result["alg_name"] = []
+#         self.result["res_objs"] = []
+#         self.result["info"] = []
+#
+#         for alg in self.alg_list:
+#             self.algorithm_list.append(algorithm_dict[alg])
+#
+#     def ExecuteUnitTest(self):
+#
+#         for algorithm in self.algorithm_list:
+#             for setup in self.setups:
+#                 res = minimize(PathProblem(setup),
+#                        algorithm,
+#                        termination=('n_gen', 10000),
+#                        seed=1,
+#                        # output=PathOutput(),
+#                        verbose=True,
+#                        # termination=path_termination
+#                        )
+#                 self.result["alg_name"].append(self.alg_list[self.algorithm_list.index(algorithm)])
+#                 self.result["res_objs"].append(res)
+#                 self.result["info"].append(setup)
+#
+#
+#     def SaveResults(self, path):
+#
+#         self.path = path if path else "/Users/kadircan/Documents/MATLAB/Thesis/"
+#
+#         for i in range(len(self.result["res_objs"])):
+#
+#             res = self.result["res_objs"][i]
+#             alg_name = self.result["alg_name"][i]
+#
+#             X = res.X
+#             F = res.F
+#             print('F:', abs(F))
+#
+#             min_obj_values = []
+#             min_obj_indexes = []
+#             endpoint_sols = []
+#
+#             for i in range(F.shape[1]):
+#
+#                 min_obj_values.append(abs(min(F[:, i])))
+#                 min_obj_indexes.append(np.where(F[:, i] == min(F[:, i]))[0][0])
+#                 endpoint_sols.append(X[min_obj_indexes[-1], 0])
+#
+#                 sol = endpoint_sols[-1]
+#                 info = sol.info
+#
+#                 io.savemat(f"{self.path}{alg_name}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_path_matrix-{F_descriptions[i]}.mat",{'array': sol.path_matrix})
+#                 io.savemat(f"{self.path}{alg_name}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_x_coords-{F_descriptions[i]}.mat",{'array': sol.x_coords_matrix})
+#                 io.savemat(f"{self.path}{alg_name}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_y_coords-{F_descriptions[i]}.mat",{'array': sol.y_coords_matrix})
+#
+#
+#     def __call__(self, *args, **kwargs):
+#
+#         self.ExecuteUnitTest()
+#         self.SaveResults()
+#
+#
+# alg_list = ['NSGA2','NSGA3']
+# setup = PathInfo()
+#
+# number_of_drones = [8,12]
+# r_comm = [100*sqrt(2),200*sqrt(2)]
+#
+# for Ns in number_of_drones:
+#     setup.number_of_drones = Ns
+#     for comm_dist in r_comm:
+#         setup.r_comm = comm_dist
+#
+#         unittest = PathUnitTest(alg_list=alg_list, setups=[setup])
+#         unittest()
+
+
+
+
+# ------------  MANUAL  -------------------------
+
+path_termination = DefaultMultiObjectiveTermination(
+    # xtol=1e-8,
+    # cvtol=0,    # 1e-6,
+    # ftol=0.01, #0.0025,
+    # # period=30,
+    n_max_gen=10000,
+    # n_max_evals=100000
+)
+
+matlab_filepath = '/Users/kadircan/Documents/MATLAB/Thesis/'
+
+info:PathInfo = PathInfo()
+
+algorithm_list = ['NSGA2']
+number_of_drones_list = [4]
+r_comm_list = [4]
+min_visits_list = [5]
+hovering_states = [False]
+realtime_connectivity_states = [False]
+
+for algorithm in algorithm_list:
+    for hovering in hovering_states:
+        info.hovering = hovering
+        for realtime_connectivity in realtime_connectivity_states:
+            info.realtime_connectivity = realtime_connectivity
+            for number_of_drones in number_of_drones_list:
+                info.Nd = number_of_drones
+                for r_comm in r_comm_list:
+                    info.rc = r_comm
+                    for min_visits in min_visits_list:
+                        info.min_visits = min_visits
+
+                        print(f"Algorithm: {algorithm}, Hovering: {info.hovering}, Realtime Connectivity: {info.realtime_connectivity}, Number of Drones: {info.Nd}, Communication Range: {info.rc}, Min Visits: {info.min_visits}")
+
+                        t = time.time()
+
+                        res = minimize(problem=PathProblem(info),
+                                      algorithm=algorithm_dict[algorithm],
+                                      termination=('n_gen',4000),
+                                      seed=1,
+                                      # output=PathOutput(),
+                                      verbose=True,
+                                      # termination=path_termination
+                                      )
+
+                        elapsed_time = time.time() - t
+
+                        X = res.X
+                        F = res.F
+                        print('F:',abs(F))
+
+                        print(f"Elapsed time: {round(elapsed_time/60)} minutes")
+
+                        # Save Solution Objects and Objective Values
+                        np.save(f"Results/X/alg_{algorithm}_hovering_{info.hovering}_realtimeConnectivityCalculation_{info.realtime_connectivity}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}_SolutionObjects",X)
+                        np.save(f"Results/F/alg_{algorithm}_hovering_{info.hovering}_realtimeConnectivityCalculation_{info.realtime_connectivity}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}_ObjectiveValues",F)
+                        np.save(f"Results/Time/alg_{algorithm}_hovering_{info.hovering}_realtimeConnectivityCalculation_{info.realtime_connectivity}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}_Runtime",elapsed_time)
+
+                        sols = np.load(f'Results/X/alg_{algorithm}_hovering_{info.hovering}_realtimeConnectivityCalculation_{info.realtime_connectivity}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}_SolutionObjects.npy',allow_pickle=True)
+                        objs = np.load(f'Results/F/alg_{algorithm}_hovering_{info.hovering}_realtimeConnectivityCalculation_{info.realtime_connectivity}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}_ObjectiveValues.npy',allow_pickle=True)
+
+                        # Export Distance Related Solutions to MATLAB
+                        dist_values = objs[:,0].tolist()
+                        max_dist_idx = dist_values.index(max(dist_values))
+                        min_dist_idx = dist_values.index(min(dist_values))
+                        mid_dist_idx = dist_values.index(median_low(dist_values))
+                        max_dist_sol = sols[max_dist_idx][0]
+                        min_dist_sol = sols[min_dist_idx][0]
+                        mid_dist_sol = sols[mid_dist_idx][0]
+                        io.savemat(f'{matlab_filepath}alg_{algorithm}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}-MaxDist-x_matrix.mat',{'array': max_dist_sol.x_matrix})
+                        io.savemat(f'{matlab_filepath}alg_{algorithm}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}-MaxDist-y_matrix.mat',{'array': max_dist_sol.y_matrix})
+                        io.savemat(f'{matlab_filepath}alg_{algorithm}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}-MinDist-x_matrix.mat',{'array': min_dist_sol.x_matrix})
+                        io.savemat(f'{matlab_filepath}alg_{algorithm}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}-MinDist-y_matrix.mat',{'array': min_dist_sol.y_matrix})
+                        io.savemat(f'{matlab_filepath}alg_{algorithm}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}-MidDist-x_matrix.mat',{'array': mid_dist_sol.x_matrix})
+                        io.savemat(f'{matlab_filepath}alg_{algorithm}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}-MidDist-y_matrix.mat',{'array': mid_dist_sol.y_matrix})
+
+                        # Export Subtour Related Solutions to MATLAB
+                        subtour_values = objs[:,1].tolist()
+                        max_subtour_idx = subtour_values.index(max(subtour_values))
+                        min_subtour_idx = subtour_values.index(min(subtour_values))
+                        mid_subtour_idx = subtour_values.index(median_low(subtour_values))
+                        max_subtour_sol = sols[max_subtour_idx][0]
+                        min_subtour_sol = sols[min_subtour_idx][0]
+                        mid_subtour_sol = sols[mid_subtour_idx][0]
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MaxSubtour-x_matrix.mat',{'array': max_subtour_sol.x_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MaxSubtour-y_matrix.mat',{'array': max_subtour_sol.y_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MinSubtour-x_matrix.mat',{'array': min_subtour_sol.x_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MinSubtour-y_matrix.mat',{'array': min_subtour_sol.y_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MidSubtour-x_matrix.mat',{'array': mid_subtour_sol.x_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MidSubtour-y_matrix.mat',{'array': mid_subtour_sol.y_matrix})
+
+                        # Export Connectivity Related Solutions to MATLAB
+                        conn_values = objs[:, 2].tolist()
+                        max_conn_idx = conn_values.index(min(conn_values))
+                        min_conn_idx = conn_values.index(max(conn_values))
+                        mid_conn_idx = conn_values.index(median_low(conn_values))
+                        max_conn_sol = sols[max_conn_idx][0]
+                        min_conn_sol = sols[min_conn_idx][0]
+                        mid_conn_sol = sols[mid_conn_idx][0]
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MaxConn-x_matrix.mat',{'array': max_conn_sol.x_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MaxConn-y_matrix.mat',{'array': max_conn_sol.y_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MinConn-x_matrix.mat',{'array': min_conn_sol.x_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MinConn-y_matrix.mat',{'array': min_conn_sol.y_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MidConn-x_matrix.mat',{'array': mid_conn_sol.x_matrix})
+                        io.savemat('/Users/kadircan/Documents/MATLAB/Thesis/alg_NSGA2_n_64_Ns_16_comm_2_nvisits_5-MidConn-y_matrix.mat',{'array': mid_conn_sol.y_matrix})
+
+
+'''
+                min_obj_values = []
+                max_obj_values = []
+                mid_obj_values = []
+
+                min_obj_indexes = []
+                max_obj_indexes = []
+                mid_obj_indexes = []
+
+                min_obj_sols = []
+                max_obj_sols = []
+                mid_obj_sols = []
+
+                for i in range(F.shape[1]):
+
+                    min_obj_values.append(abs(min(F[:,i])))
+                    min_obj_indexes.append(np.where(F[:,i]==min(F[:,i]))[0][0])
+                    min_obj_sols.append(X[min_obj_indexes[-1] , 0])
+
+                    max_obj_values.append(abs(max(F[:,i])))
+                    max_obj_indexes.append(np.where(F[:, i] == max(F[:, i]))[0][0])
+                    max_obj_sols.append(X[max_obj_indexes[-1], 0])
+
+                    mid_obj_values.append(abs(median_low(F[:,i])))
+                    mid_obj_indexes.append(np.where(F[:, i] == median_low(F[:, i]))[0][0])
+                    mid_obj_sols.append(X[mid_obj_indexes[-1], 0])
+
+                    io.savemat(f"/Users/kadircan/Documents/MATLAB/Thesis/alg_{algorithm}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_path_matrix-{F_descriptions[i]}.mat",{'array':min_obj_sols[-1].path_matrix})
+                    io.savemat(f"/Users/kadircan/Documents/MATLAB/Thesis/alg_{algorithm}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_x_coords-{F_descriptions[i]}.mat",{'array':min_obj_sols[-1].x_coords_matrix})
+                    io.savemat(f"/Users/kadircan/Documents/MATLAB/Thesis/alg_{algorithm}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_y_coords-{F_descriptions[i]}.mat",{'array': min_obj_sols[-1].y_coords_matrix})
+
+                ### Save the Mid-Max-Min LongestSubtour F and X ###
+
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinLongestSubtourSolution",min_obj_sols[0])
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxLongestSubtourSolution",max_obj_sols[0])
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidLongestSubtourSolution",mid_obj_sols[0])
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinLongestSubtourSolution.pkl", "wb") as file:
+                    pickle.dump(min_obj_sols[0], file)
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxLongestSubtourSolution.pkl", "wb") as file:
+                    pickle.dump(max_obj_sols[0], file)
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidLongestSubtourSolution.pkl", "wb") as file:
+                    pickle.dump(mid_obj_sols[0], file)
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinLongestSubtourValue",min_obj_values[0])
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxLongestSubtourValue",max_obj_values[0])
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidLongestSubtourValue",mid_obj_values[0])
+
+                ### Save the Mid-Max-Min TotalDistance F and X ###
+
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinTotalDistanceSolution",min_obj_sols[1])
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxTotalDistanceSolution",max_obj_sols[1])
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidTotalDistanceSolution",mid_obj_sols[1])
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinTotalDistanceSolution.pkl", "wb") as file:
+                    pickle.dump(min_obj_sols[1], file)
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxTotalDistanceSolution.pkl", "wb") as file:
+                    pickle.dump(max_obj_sols[1], file)
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidTotalDistanceSolution.pkl", "wb") as file:
+                    pickle.dump(mid_obj_sols[1], file)
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinTotalDistanceValue",min_obj_values[1])
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxTotalDistanceValue",max_obj_values[1])
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidTotalDistanceValue",mid_obj_values[1])
+
+                ### Save the Mid-Max-Min PercConn F and X ###
+
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinPercConnSolution",min_obj_sols[2])
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxPercConnSolution",max_obj_sols[2])
+                # np.save(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidPercConnSolution",mid_obj_sols[2])
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinPercConnSolution.pkl", "wb") as file:
+                    pickle.dump(min_obj_sols[2], file)
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxPercConnSolution.pkl", "wb") as file:
+                    pickle.dump(max_obj_sols[2], file)
+                with open(f"Results/X/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidPercConnSolution.pkl", "wb") as file:
+                    pickle.dump(mid_obj_sols[2], file)
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MinPercConnValue",min_obj_values[2])
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MaxPercConnValue",max_obj_values[2])
+                np.save(f"Results/F/alg_{algorithm}_n_{info.number_of_cities}_Ns_{info.number_of_drones}_comm_{info.r_comm}_nvisits_{info.max_visits}_MidPercConnValue",mid_obj_values[2])
+
+
+#
+# print('Opt. Objective Values:',min_obj_values)
+# print('Opt. Obj Indexes:',min_obj_indexes)
+# print('Endpoint Solution Objects:',endpoint_sols)
+'''
+
+'''fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+img = ax.scatter(F[:,0], F[:,1], F[:,2], cmap=plt.hot())
+fig.colorbar(img)
+plt.show()
+'''
+
+'''plt.figure(figsize=(7, 5))
+# plt.scatter(F, [0]*len(F), s=30, facecolors='none', edgecolors='blue')
+plt.scatter(F[:,0], F[:,1], F[:,2], F[:,3], s=30, facecolors='none', edgecolors='blue')
+plt.title("Objective Space")
+# plt.ylim(-1,1)
+plt.show()
+'''
+'''
+plt.figure(figsize=(7, 5))
+plt.scatter(X[:, 0], X[:, 1], s=30, facecolors='none', edgecolors='r')
+plt.title("Design Space")
+plt.show()
+'''
