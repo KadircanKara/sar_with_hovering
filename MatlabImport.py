@@ -4,16 +4,7 @@ from statistics import median_low
 
 matlab_path = '/Users/kadircan/Documents/MATLAB/Thesis/'
 
-scenarios = ['alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_2_nvisits_1',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_2_nvisits_2',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_2_nvisits_3',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_2_nvisits_4',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_2_nvisits_5',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_4_nvisits_1',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_4_nvisits_2',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_4_nvisits_3',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_4_nvisits_4',
-             'alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_4_comm_4_nvisits_5']
+scenarios = ['alg_NSGA2_hovering_True_realtimeConnectivityCalculation_False_n_64_Ns_8_comm_2_nvisits_1']
 
 for scenario in scenarios:
 

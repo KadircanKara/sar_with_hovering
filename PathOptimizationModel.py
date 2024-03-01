@@ -11,7 +11,7 @@ from PathSolution import *
 
 
 moo_model = {
-    'F':['Total Distance','Longest Subtour','Percentage Connectivity'],
+    'F':['Total Distance','Longest Subtour','Percentage Connectivity','Max Disconnected Time'],
     'G':['Limit Long Jumps'], # 'Limit Cell per Drone'
     'H':[] # 'Limit Long Jumps'
 }
@@ -28,6 +28,8 @@ def get_model_function_values(sol:PathSolution):
         'Total Distance':sol.total_dist,
         'Longest Subtour':sol.longest_subtour,
         'Percentage Connectivity':-sol.percentage_connectivity,
+        'Total Disconnected Time':sol.total_disconnected_timesteps,
+        'Max Disconnected Time':sol.max_disconnected_timesteps,
         'Limit Long Jumps':sol.long_jump_violations_constr,
         'Limit Cell per Drone':sol.cells_per_drone_constr,
         'Limit Max Visits':sol.max_visits_constr

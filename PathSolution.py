@@ -86,11 +86,14 @@ class PathSolution():
 
         self.time_slots = 0
         self.time_steps = 0
+
         # Connectivity
         self.connectivity_matrix = None
         self.num_connected_drones_to_base = None
         # self.connectivity_to_base_matrix = None
         self.percentage_connectivity = 0
+        self.total_disconnected_timesteps = 0
+        self.max_disconnected_timesteps = 0
 
 
         # Call PathSolution functions
@@ -98,8 +101,30 @@ class PathSolution():
         self.get_connectivity_matrix()
         self.calculate_num_connected_drones_to_base()
         self.calculate_percentage_connectivity()
+        self.calculate_total_disconnected_timesteps() # NOTE COMPLETE YET
         self.calculate_total_distance_and_longest_subtour()
         self.calculate_distance_constraints()
+
+    def calculate_total_disconnected_timesteps(self):
+
+            # Finds the maximum disconnected time
+
+            info = self.info
+
+            time_steps = self.path_matrix.shape[1]
+
+            num_connected_drones = np.zeros((info.Nd, time_steps), dtype=int)
+
+            drone_total_disconnected_timesteps = np.zeros(info.Nd,dtype=int)
+
+            for i in range(info.Nd):
+                num_connected_drones[i] = connected_nodes(self, i+1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
+                drone_total_disconnected_timesteps[i] = len(np.where(num_connected_drones[i] == 0)[0])
+
+            self.total_disconnected_timesteps = len(np.where(num_connected_drones == 0)[0])  # Total timesteps where a drone is disconnected
+            self.max_disconnected_timesteps = max(drone_total_disconnected_timesteps)
+
+            return self.total_disconnected_timesteps, self.max_disconnected_timesteps
 
     def calculate_distance_constraints(self):
         limit_long_jumps(self)

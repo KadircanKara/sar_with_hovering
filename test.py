@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import random
 
-a = np.full(5,1)
-print(a)
+a = np.array([ [1,2,3],[4,5,6],[7,8,9] ])
+print(len(np.where(a==10)[0]))
 
 '''# Sample data for two drones
 x_matrix = np.load('x_matrix.npy', allow_pickle=True)

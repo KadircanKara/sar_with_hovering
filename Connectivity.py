@@ -1,6 +1,25 @@
 import numpy as np
 from collections import deque
 
+def calculate_disconnected_timesteps(sol):
+    # Finds the maximum disconnected time
+
+    info = sol.info
+
+    time_steps = sol.path_matrix.shape[1]
+
+    disconnected_timesteps_matrix = np.zeros((info.Nd, time_steps), dtype=int)
+
+    drone_total_disconnected_timesteps = np.zeros(info.Nd, dtype=int)
+
+    for i in range(info.Nd):
+        disconnected_timesteps_matrix[i] = connected_nodes(sol,i + 1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
+        drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
+
+    sol.total_disconnected_timesteps = len(np.where(disconnected_timesteps_matrix == 0)[0])  # Total timesteps where a drone is disconnected
+    sol.max_disconnected_timesteps = max(drone_total_disconnected_timesteps)
+
+
 def dfs(connectivity_matrix, node, visited, component):
     visited[node] = True
     component.append(node)
@@ -39,6 +58,9 @@ def connected_nodes(sol, start_node):
         visited = [False] * num_nodes
         queue = deque([start_node])
         connected_count = 0
+
+        # print(f"visited: {visited}")
+        # print(f"start node: {start_node}")
 
         visited[start_node] = True  # Mark start node as visited
 
