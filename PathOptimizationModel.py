@@ -33,7 +33,7 @@ def get_model_function_values(sol:PathSolution):
         'Percentage Connectivity': -sol.percentage_connectivity,
         'Total Disconnected Time': sol.total_disconnected_timesteps,
         'Max Disconnected Time': max_disconnected_time(sol),
-        'Mean Disconnected Time': avg_disconnected_time(sol),
+        'Mean Disconnected Time': mean_disconnected_time(sol),
         'Limit Long Jumps': sol.long_jump_violations_constr,
         'Limit Cell per Drone': sol.cells_per_drone_constr,
         'Limit Max Visits': sol.max_visits_constr
