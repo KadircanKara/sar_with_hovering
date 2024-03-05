@@ -58,7 +58,7 @@ algorithm_dict = {
                         mutation=path_mutation,
                         crossover=path_crossover,
                         eliminate_duplicates=path_eliminate_duplicates,
-                        repair=path_repair
+                        repair=path_repair,
                 ),
 
     'MOEAD' : MOEAD(

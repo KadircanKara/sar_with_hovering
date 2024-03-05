@@ -1,20 +1,46 @@
 import numpy as np
 from math import floor, sqrt
+import copy
 
 # from PathSolution import *
 
-def limit_max_visits(sol):
+
+def number_of_long_jumps(sol):
     info = sol.info
-    path_matrix = sol.interpolated_path_matrix
-    cell_visits = np.zeros(info.Nc)
-    for i in range(info.Nc):
-        cell_visits[i] = np.count_nonzero(path_matrix==i)
+    path_matrix = sol.path_matrix
+    long_jump_violations = 0
+    for i in range(info.Nd):
+        for j in range(path_matrix.shape[1] - 1):
+            if info.D[path_matrix[i+1,j],path_matrix[i+1,j+1]] > info.A * sqrt(2):
+                long_jump_violations += 1
+    return long_jump_violations
 
-    # print(f"Max Visits: {max(cell_visits)}")
 
-    sol.max_visits_constr = max(cell_visits) - info.max_visits
+def visit_time_variance(sol):
+    return np.var(sol.cell_nvisits)
 
-    return sol.max_visits_constr
+def max_visits(sol):
+    # return max(sol.cell_nvisits) - info.max_visits
+    return max(sol.cell_nvisits)
+
+def min_time_between_visits(sol):
+    info = sol.info
+    tbv = sol.time_between_visits
+    min_tbv = [ min(tbv[cell]) for cell in range(info.Nc)]
+    return min(min_tbv)
+
+# def limit_max_visits(sol):
+#     info = sol.info
+#     path_matrix = sol.interpolated_path_matrix
+#     cell_visits = np.zeros(info.Nc)
+#     for i in range(info.Nc):
+#         cell_visits[i] = np.count_nonzero(path_matrix==i)
+#
+#     # print(f"Max Visits: {max(cell_visits)}")
+#
+#     sol.max_visits_constr = max(cell_visits) - info.max_visits
+#
+#     return sol.max_visits_constr
 
 
 def limit_cell_per_drone(sol):

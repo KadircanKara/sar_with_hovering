@@ -1,23 +1,39 @@
 import numpy as np
 from collections import deque
 
-def calculate_disconnected_timesteps(sol):
-    # Finds the maximum disconnected time
+def percentage_connectivity(sol):
+    num_connected_drones_to_base = connected_nodes(sol, 0)
+    sol.percentage_connectivity = 100 * sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * sol.info.Nd)
+    return sol.percentage_connectivity
+    # return (sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * info.Nd)) * 100
 
-    info = sol.info
 
-    time_steps = sol.path_matrix.shape[1]
+def max_disconnected_time(sol):
+    sol.max_maxDisconnectedTime = max(sol.disconnected_time_steps)
+    return sol.max_maxDisconnectedTime
 
-    disconnected_timesteps_matrix = np.zeros((info.Nd, time_steps), dtype=int)
+def mean_disconnected_time(sol):
+    sol.mean_maxDisconnectedTime = np.mean(sol.disconnected_time_steps)
+    return sol.mean_maxDisconnectedTime
 
-    drone_total_disconnected_timesteps = np.zeros(info.Nd, dtype=int)
 
-    for i in range(info.Nd):
-        disconnected_timesteps_matrix[i] = connected_nodes(sol,i + 1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
-        drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
-
-    sol.total_disconnected_timesteps = len(np.where(disconnected_timesteps_matrix == 0)[0])  # Total timesteps where a drone is disconnected
-    sol.max_disconnected_timesteps = max(drone_total_disconnected_timesteps)
+# def calculate_disconnected_timesteps(sol):
+#     # Finds the maximum disconnected time
+#
+#     info = sol.info
+#
+#     time_steps = sol.path_matrix.shape[1]
+#
+#     disconnected_timesteps_matrix = np.zeros((info.Nd, time_steps), dtype=int)
+#
+#     drone_total_disconnected_timesteps = np.zeros(info.Nd, dtype=int)
+#
+#     for i in range(info.Nd):
+#         disconnected_timesteps_matrix[i] = connected_nodes(sol,i + 1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
+#         drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
+#
+#     sol.total_disconnected_timesteps = len(np.where(disconnected_timesteps_matrix == 0)[0])  # Total timesteps where a drone is disconnected
+#     sol.max_disconnected_timesteps = max(drone_total_disconnected_timesteps)
 
 
 def dfs(connectivity_matrix, node, visited, component):

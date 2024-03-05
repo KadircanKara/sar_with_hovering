@@ -2,9 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import random
+from tempfile import TemporaryFile
 
-a = np.array([ [1,2,3],[4,5,6],[7,8,9] ])
-print(len(np.where(a==10)[0]))
+a = 1
+b = 2
+
+a,b=b,a
+
+print(a,b)
 
 '''# Sample data for two drones
 x_matrix = np.load('x_matrix.npy', allow_pickle=True)
