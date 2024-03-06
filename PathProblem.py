@@ -25,7 +25,7 @@ class PathProblem(ElementwiseProblem):
 
         sol:PathSolution = x[0]
         model = self.model
-        model_functions = get_model_function_values(sol)
+        # model_functions = get_model_function_values(sol)
         f,g,h=[],[],[]
 
         if model == 'moo':
@@ -35,23 +35,23 @@ class PathProblem(ElementwiseProblem):
 
         for i in range(self.n_obj):
             obj_name = model_var['F'][i]
-            obj_calc = model_functions[obj_name]
-            f.append(obj_calc)
+            obj_calc = model_metric_info[obj_name]
+            f.append(obj_calc(sol))
         for j in range(self.n_ieq_constr):
             ieq_constr_name = model_var['G'][j]
-            ieq_constr_calc = model_functions[ieq_constr_name]
-            g.append(ieq_constr_calc)
+            ieq_constr_calc = model_metric_info[ieq_constr_name]
+            g.append(ieq_constr_calc(sol))
         for k in range(self.n_eq_constr):
             eq_constr_name = model_var['H'][k]
-            eq_constr_calc = model_functions[eq_constr_name]
-            h.append(eq_constr_calc)
+            eq_constr_calc = model_metric_info[eq_constr_name]
+            h.append(eq_constr_calc(sol))
 
         if f:
             out['F'] = anp.column_stack(f)
             # print(f"F:{out['F']}")
         if g:
             out['G'] = anp.column_stack(g)
-            # print(f"G:{out['G']}")
+            print(f"G:{out['G']}")
         if h:
             out['H'] = anp.column_stack(h)
             # print(f"H:{out['H']}")

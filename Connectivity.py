@@ -1,39 +1,57 @@
 import numpy as np
 from collections import deque
+from PathSolution import PathSolution
 
-def percentage_connectivity(sol):
-    num_connected_drones_to_base = connected_nodes(sol, 0)
-    sol.percentage_connectivity = 100 * sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * sol.info.Nd)
-    return sol.percentage_connectivity
+def calculate_percentage_connectivity(sol:PathSolution):
+    if not sol.percentage_connectivity :
+        num_connected_drones_to_base = connected_nodes(sol, 0)
+        sol.percentage_connectivity = 100 * sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * sol.info.Nd)
+    return -sol.percentage_connectivity
     # return (sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * info.Nd)) * 100
 
-
-def max_disconnected_time(sol):
+def calculate_total_maxDisconnectedTime(sol:PathSolution):
+    if not sol.disconnected_time_steps:
+        calculate_disconnected_timesteps(sol)
+    sol.total_maxDisconnectedTime = sum(sol.max_disconnected_timesteps)
+    return sol.total_maxDisconnectedTime
+def calculate_max_maxDisconnectedTime(sol:PathSolution):
+    if not sol.disconnected_time_steps:
+        calculate_disconnected_timesteps(sol)
     sol.max_maxDisconnectedTime = max(sol.disconnected_time_steps)
     return sol.max_maxDisconnectedTime
 
-def mean_disconnected_time(sol):
+def calculate_mean_maxDisconnectedTime(sol:PathSolution):
+    if not sol.disconnected_time_steps:
+        calculate_disconnected_timesteps(sol)
     sol.mean_maxDisconnectedTime = np.mean(sol.disconnected_time_steps)
     return sol.mean_maxDisconnectedTime
 
+# --------------------------------------------------------------------------------------------------------------
+# Functions below are used in calculating connectivity related objective functions and constraints written above
+# --------------------------------------------------------------------------------------------------------------
 
-# def calculate_disconnected_timesteps(sol):
-#     # Finds the maximum disconnected time
-#
-#     info = sol.info
-#
-#     time_steps = sol.path_matrix.shape[1]
-#
-#     disconnected_timesteps_matrix = np.zeros((info.Nd, time_steps), dtype=int)
-#
-#     drone_total_disconnected_timesteps = np.zeros(info.Nd, dtype=int)
-#
-#     for i in range(info.Nd):
-#         disconnected_timesteps_matrix[i] = connected_nodes(sol,i + 1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
-#         drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
-#
-#     sol.total_disconnected_timesteps = len(np.where(disconnected_timesteps_matrix == 0)[0])  # Total timesteps where a drone is disconnected
-#     sol.max_disconnected_timesteps = max(drone_total_disconnected_timesteps)
+def calculate_disconnected_timesteps(sol:PathSolution):
+
+    # Finds the maximum disconnected timesteps for each drone
+
+    info = sol.info
+
+    time_steps = sol.path_matrix.shape[1]
+
+    disconnected_timesteps_matrix = np.zeros((info.Nd, time_steps), dtype=int)
+
+    drone_total_disconnected_timesteps = np.zeros(info.Nd, dtype=int)
+
+    for i in range(info.Nd):
+        disconnected_timesteps_matrix[i] = connected_nodes(sol,i + 1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
+        drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
+
+    sol.disconnected_time_steps = drone_total_disconnected_timesteps
+
+    return sol.disconnected_time_steps
+
+    # sol.total_disconnected_timesteps = len(np.where(disconnected_timesteps_matrix == 0)[0])  # Total timesteps where a drone is disconnected
+    # sol.max_disconnected_timesteps = max(drone_total_disconnected_timesteps)
 
 
 def dfs(connectivity_matrix, node, visited, component):
@@ -57,7 +75,7 @@ def connected_components(connectivity_matrix):
     return components
 
 
-def connected_nodes(sol, start_node):
+def connected_nodes(sol:PathSolution, start_node):
 
     # start node: The node that we calculate connectivity to
 

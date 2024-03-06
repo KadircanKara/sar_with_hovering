@@ -44,7 +44,7 @@ for algorithm in algorithm_list:
                                       algorithm=algorithm_dict[algorithm],
                                       termination=('n_gen',4000),
                                       seed=1,
-                                      output=PathOutput(PathProblem(info)),
+                                      # output=PathOutput(PathProblem(info)),
                                       verbose=True,
                                       # termination=path_termination
                                       )
@@ -76,12 +76,12 @@ for algorithm in algorithm_list:
                         sols = np.load(f'Results/X/alg_{algorithm}_hovering_{info.hovering}_realtimeConnectivityCalculation_{info.realtime_connectivity}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}_SolutionObjects.npy',allow_pickle=True)
                         objs = np.load(f'Results/F/alg_{algorithm}_hovering_{info.hovering}_realtimeConnectivityCalculation_{info.realtime_connectivity}_n_{info.Nc}_Ns_{info.Nd}_comm_{info.rc}_nvisits_{info.min_visits}_ObjectiveValues.npy',allow_pickle=True)
 
-                        dist_values, dist_penalty_values, conn_values, disconn_values = objs.transpose().tolist()
+                        dist_values, conn_values, maxDisconn_values, timePenalty_values = objs.transpose().tolist()
 
                         export_to_matlab(matlab_filepath, scenario, sols, "Dist", dist_values, inv_rel=False)
-                        export_to_matlab(matlab_filepath, scenario, sols, "DistPenalties", dist_penalty_values, inv_rel=False)
                         export_to_matlab(matlab_filepath, scenario, sols, "Conn", conn_values, inv_rel=True)
-                        export_to_matlab(matlab_filepath, scenario, sols, "MaxDisconn", disconn_values, inv_rel=False)
+                        export_to_matlab(matlab_filepath, scenario, sols, "MaxDisconn", maxDisconn_values, inv_rel=False)
+                        export_to_matlab(matlab_filepath, scenario, sols, "DistPenalties", timePenalty_values, inv_rel=False)
 
 '''
 # Export Distance Related Solutions to MATLAB

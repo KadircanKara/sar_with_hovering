@@ -1,6 +1,6 @@
 from PathSolution import *
-from Distance import min_time_between_visits, max_visits, visit_time_variance, number_of_long_jumps
-from Connectivity import max_disconnected_time, mean_disconnected_time
+from Distance import *
+from Connectivity import *
 
 # hovering = True
 # realtime_connectivity = False
@@ -13,8 +13,8 @@ from Connectivity import max_disconnected_time, mean_disconnected_time
 
 
 moo_model = {
-    'F':['Total Distance', 'Distance Penalties', 'Percentage Connectivity','Avg Disconnected Time'],
-    'G':['Limit Long Jumps'], # 'Limit Cell per Drone'
+    'F':['Total Distance', 'Percentage Connectivity','Mean Disconnected Time', 'Time Penalties'],
+    'G':['Limit Long Jumps','Limit Cell per Drone'], # 'Limit Cell per Drone'
     'H':[] # 'Limit Long Jumps'
 }
 
@@ -24,19 +24,16 @@ soo_model = {
     'G': ['Limit Cell per Drone']
 }
 
-def get_model_function_values(sol:PathSolution):
-
-    model_functions = {
-        'Total Distance': sol.total_dist,
-        'Distance Penalties': max_visits(sol) - min_time_between_visits(sol) + visit_time_variance(sol) + number_of_long_jumps(sol),
-        'Longest Subtour': sol.longest_subtour,
-        'Percentage Connectivity': -sol.percentage_connectivity,
-        'Total Disconnected Time': sol.total_disconnected_timesteps,
-        'Max Disconnected Time': max_disconnected_time(sol),
-        'Mean Disconnected Time': mean_disconnected_time(sol),
-        'Limit Long Jumps': sol.long_jump_violations_constr,
-        'Limit Cell per Drone': sol.cells_per_drone_constr,
-        'Limit Max Visits': sol.max_visits_constr
-    }
-
-    return model_functions
+model_metric_info = {
+    'Total Distance': get_total_distance,
+    # 'Max Visits': get_max_visits,
+    'Time Penalties': calculate_time_penalty,
+    'Longest Subtour': get_longest_subtour,
+    'Percentage Connectivity': calculate_percentage_connectivity,
+    'Total Disconnected Time': calculate_total_maxDisconnectedTime,
+    'Max Disconnected Time': calculate_max_maxDisconnectedTime,
+    'Mean Disconnected Time': calculate_mean_maxDisconnectedTime,
+    'Limit Long Jumps': long_jumps_constr,
+    'Limit Cell per Drone': cell_per_drone_constr
+    # 'Limit Max Visits': sol.max_visits_constr # Not Neccessary alongside limit long jumps cv
+}
