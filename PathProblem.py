@@ -58,7 +58,7 @@ class PathProblem(ElementwiseProblem):
             out['G'] = anp.column_stack(g)
             # for i,y in enumerate(out['G'][0]):
             #     print(f"{model['G'][i]} CV: {y}")
-            print(f"G:{out['G']}")
+            # print(f"G:{out['G']}")
         if h:
             out['H'] = anp.column_stack(h)
             # print(f"H:{out['H']}")
