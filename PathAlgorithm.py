@@ -20,6 +20,7 @@ from pymoo.algorithms.moo.unsga3 import UNSGA3
 # from pymoo.algorithms.moo.age import AGEMOEA
 from pymoo.algorithms.moo.sms import SMSEMOA
 from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.algorithms.soo.nonconvex.pso import PSO
 
 # from pymoo.termination.default import PathTermination
 
@@ -42,6 +43,15 @@ path_repair = NoRepair()
 
 
 algorithm_dict = {
+
+    'PSO': PSO(
+        pop_size=100,
+        sampling=path_sampling,
+        # mutation=path_mutation,
+        # crossover=path_crossover,
+        # eliminate_duplicates=path_eliminate_duplicates,
+        repair=path_repair
+    ),
 
     'GA': GA(
         pop_size=100,

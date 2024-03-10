@@ -91,17 +91,20 @@ def long_jumps_constr(sol:PathSolution):
 
     # sol.long_jump_violations = long_jump_violations - constr
 
-    cofactor = 2
-    # bias = 5
-    constr = info.Nd * info.min_visits * cofactor      # 33 for Nd=8 min_visits=2 (cofactor=2.0625)
-    #                                                      37.5 for N=8 min_visits=3 (cofactor=1.5625)
-    #                                                      107 for Nd=16 min_visits=3 (cofactor=4.45)
+    # cofactor = 2
+    # # bias = 5
+    # constr = info.Nd * info.min_visits * cofactor      # 33 for Nd=8 min_visits=2 (cofactor=2.0625)
+    # #                                                      37.5 for N=8 min_visits=3 (cofactor=1.5625)
+    # #                                                      107 for Nd=16 min_visits=3 (cofactor=4.45)
+    #
+    # sol.long_jump_violations_constr = long_jump_violations - constr
+    #
+    # return sol.long_jump_violations_constr
 
-    sol.long_jump_violations_constr = long_jump_violations - constr
-
-    return sol.long_jump_violations_constr
-
-
+def longest_subtour_constr(sol:PathSolution):
+    if not sol.longest_subtour :
+        get_longest_subtour(sol)
+    return sol.longest_subtour - sol.info.subtour_length_th
 
 '''# def limit_max_visits(sol):
 #     info = sol.info

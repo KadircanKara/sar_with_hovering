@@ -5,6 +5,7 @@ from pymoo.operators.mutation.inversion import inversion_mutation
 from scipy.spatial import distance
 from typing import List, Dict
 import random
+from copy import copy, deepcopy
 
 from PathSolution import *
 from PathInfo import *
@@ -27,24 +28,27 @@ class PathMutation(Mutation):
             mut_path = path.copy()
             mut_start_points = start_points.copy()
 
-            # start, end = sorted(random.randrange(path,2))
-            # while end-start == 1:
-            #     print("IN WHILE LOOP !")
-            #     start, end = sorted(random.randrange(path, 2))
-
             start, end = seq = random_sequence(len(mut_path))
-            # print(f"original path: {path}\nchosen sequence: {seq}")
-            # start = mut_path.index(seq[0])
-            # end = mut_path.index(seq[-1])
+
+            # Path Mutations
 
             # Swap Mutation
             if random.uniform(0,1) <= 0.5:
-                # print("Swap Mutation")
                 mut_path[start],mut_path[end] = mut_path[end],mut_path[start] # Apply swap
             # Inversion Mutation
             else:
-                # print("Inversion Mutation")
                 mut_path = inversion_mutation(path, seq, inplace=True)
+
+            # Start Points Mutation
+            if random.uniform(0, 1) <= 0.5:
+                random_index = random.randint(1,len(start_points)-2)
+                # print(f"random index: {random_index}")
+                # print(f"pre mutation: {mut_start_points[random_index]}")
+                if mut_start_points[random_index] - mut_start_points[random_index-1] < int(round(problem.info.Nc/problem.info.Nd)):
+                    mut_start_points[random_index] = mut_start_points[random_index-1] + int(round((mut_start_points[random_index+1] - mut_start_points[random_index-1])/2))
+                # print(f"post mutation: {mut_start_points[random_index]}")
+                if mut_start_points[random_index] - mut_start_points[random_index-1] >= int(round(problem.info.Nc/problem.info.Nd)):
+                    mut_start_points[random_index] = mut_start_points[random_index-1] + int(round((mut_start_points[random_index]-mut_start_points[random_index-1])/2))
 
             # print(f"Mutated path: {mut_path}")
             # print(f"Mutated start points: {mut_start_points}")

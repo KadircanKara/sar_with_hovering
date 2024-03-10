@@ -23,12 +23,13 @@ default_input_parameters = {
     'Th': 0.9,
     'max_isolated_time': 0,
     'hovering':True,
-    'realtime_connectivity':False
+    'realtime_connectivity':False,
+    'realtime_connectivity_stepsize':10
 }
 
 class PathInfo:
     def __init__(self, grid_size=None, A=None, Nd=None, V=None, rc=None, min_visits=None, max_visits=None, Nt=None, tar_cell=None, p=None, q=None,
-                 Th=None, max_isolated_time=None, hovering=True, realtime_connectivity=False):
+                 Th=None, max_isolated_time=None, hovering=True, realtime_connectivity=False, realtime_connectivity_stepsize=None):
 
         self.grid_size = grid_size if grid_size else default_input_parameters['grid_size']
         self.Nc = self.grid_size ** 2
@@ -46,6 +47,9 @@ class PathInfo:
         self.Th = Th if Th else default_input_parameters['Th']
         self.hovering = hovering if hovering else default_input_parameters['hovering']
         self.realtime_connectivity = realtime_connectivity if realtime_connectivity else default_input_parameters['realtime_connectivity']
+        self.realtime_connectivity_stepsize = realtime_connectivity_stepsize if realtime_connectivity_stepsize else default_input_parameters['realtime_connectivity_stepsize']
+
+        self.subtour_length_th = (int(round(self.Nc * self.max_visits/self.Nd)^2))*self.A
 
 
 

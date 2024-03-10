@@ -57,6 +57,9 @@ class PathSolution():
         self.start_points = start_points
         self.info: PathInfo = info
 
+        # print(f'path: {self.path}')
+        # print(f"start points: {self.start_points}")
+
         # cell - path
         self.drone_dict_generated = False
         self.drone_dict = dict()
@@ -127,79 +130,6 @@ class PathSolution():
 
         self.cell_visit_steps = cell_visit_steps
 
-
-    # def calculate_time_between_visits(self):
-    #
-    #     info = self.info
-    #     path_matrix = self.interpolated_path_matrix[1:,:].transpose()
-    #     cell_nvisits = np.zeros(info.Nc, dtype=int)
-    #     cell_visit_steps = dict()
-    #     time_between_visits = dict()
-    #     # plt.figure()
-    #     # plt.xticks( range(info.Nc) )  # Specify the locations of the ticks
-    #     # xticklabels = ['A', 'B', 'C', 'D', 'E']
-    #     # scatter_plot = plt.scatter([], [])
-    #     for i in range(info.Nc):
-    #         time_between_visits[i] = []
-    #         cell_visit_steps[i] = np.where(path_matrix==i)[0] # Steps at which the cell is visited
-    #         cell_nvisits[i] = len(cell_visit_steps[i]) # How many times the cell is visited
-    #         # Calculate tbv
-    #         for j in range(1,len(cell_visit_steps[i])):
-    #             time_between_visits[i].append( cell_visit_steps[i][j] - cell_visit_steps[i][j-1] )
-    #
-    #         if len(time_between_visits[i])==0:
-    #             time_between_visits[i].append(0)
-    #             scatter_plot = plt.scatter(i, time_between_visits[i][-1])
-    #             # plt.pause(0.01)  # Add a short pause to observe the animation
-    #             # plt.draw()
-    #     # plt.show()
-    #
-    #     self.cell_nvisits = cell_nvisits
-    #     self.time_between_visits = time_between_visits
-
-        # print(f"cell nvisits:\n{cell_nvisits}")
-        # print(f"max: {max(cell_nvisits)}, min: {min(cell_nvisits)}")
-        # print(f"cell visit steps:\n{cell_visit_steps}")
-        # print(f"time between visits:\n{time_between_visits}")
-
-
-    # def calculate_disconnected_timesteps(self):
-    #
-    #         # Finds the maximum disconnected time
-    #
-    #         info = self.info
-    #
-    #         time_steps = self.path_matrix.shape[1]
-    #
-    #         num_connected_drones = np.zeros((info.Nd, time_steps), dtype=int)
-    #
-    #         drone_total_disconnected_timesteps = np.zeros(info.Nd,dtype=int)
-    #
-    #         for i in range(info.Nd):
-    #             num_connected_drones[i] = connected_nodes(self, i+1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
-    #             drone_total_disconnected_timesteps[i] = len(np.where(num_connected_drones[i] == 0)[0])
-    #
-    #         self.disconnected_time_steps = drone_total_disconnected_timesteps
-    #
-    #
-    # def calculate_distance_constraints(self):
-    #     limit_long_jumps(self)
-    #     limit_cell_per_drone(self)
-    #     # limit_max_visits(self)
-    #
-    #
-    # def calculate_total_distance_and_longest_subtour(self):
-    #     get_total_distance_and_longest_subtour(self)
-    #     # print(f"Drone Distances:\n{self.drone_dists}")
-    #     # print(f"Total Distance: {self.total_dist}, Longest Subtour: {self.longest_subtour}")
-    #
-    # def calculate_percentage_connectivity(self):
-    #     self.num_connected_drones_to_base = connected_nodes(self, 0)
-    #     info = self.info
-    #     self.percentage_connectivity = ( sum(self.num_connected_drones_to_base) / (len(self.num_connected_drones_to_base) * info.Nd) ) * 100
-    #     # print(f"percentage connectivity: {self.percentage_connectivity}")
-    #
-    #
     def get_connectivity_matrix(self):
         # Calculate in realtime
         info = self.info
@@ -209,9 +139,10 @@ class PathSolution():
         comm_dist = info.rc * info.A
 
         if self.realtime_connectivity : # Calculate realtime connectivity
-            self.connectivity_matrix = np.zeros((self.time_slots, num_nodes, num_nodes), dtype=int)  # At each timeslot, look at each drone connectivity including BS
-            for i in range(self.time_slots):
-                pos = realtime_path_matrix[:,i] # x-coords for every node including BS
+            self.connectivity_matrix = np.zeros((floor(self.time_slots/self.info.realtime_connectivity_stepsize), num_nodes, num_nodes), dtype=int)  # At each timeslot, look at each drone connectivity including BS
+            for i in range(self.connectivity_matrix.shape[0]):
+                # print("i:",i)
+                pos = realtime_path_matrix[:,self.info.realtime_connectivity_stepsize*i] # x-coords for every node including BS
                 for j in range(num_nodes):
                     for k in range(num_nodes):
                         if j != k and info.D[pos[j],pos[k]] <= comm_dist:
@@ -311,6 +242,8 @@ class PathSolution():
         interpolated_path_dict = dict()
         interpolated_path_max_len = 0
 
+        # print(f"path matrix: {self.path_matrix}")
+
         for i in range(info.Nd):
             self.x_matrix[i + 1] = np.hstack((self.x_coords_list[i], np.array([x_sink] * (self.time_slots - self.drone_timeslots[i]))))
             self.y_matrix[i + 1] = np.hstack((self.y_coords_list[i], np.array([y_sink] * (self.time_slots - self.drone_timeslots[i]))))
@@ -324,6 +257,7 @@ class PathSolution():
             # print(f"Drone {i+1}")
             # print("----------------------------------------------------------------------------------------------------")
             # print(f"matrix list: {self.realtime_path_matrix[i + 1]}\ndict list: {interpolated_path_dict[i]}")
+
             if  self.realtime_path_matrix[i + 1][-1] != interpolated_path_dict[i][-1]:
                 interpolated_path_dict[i].append(self.realtime_path_matrix[i + 1][-1])
             if len(interpolated_path_dict[i]) > interpolated_path_max_len:

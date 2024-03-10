@@ -13,16 +13,60 @@ from Connectivity import *
 
 
 moo_model = {
-    'F':['Total Distance', 'Percentage Connectivity','Mean Disconnected Time', 'Time Penalties'],
-    'G':['Limit Long Jumps','Limit Cell per Drone'], # 'Limit Cell per Drone'
-    'H':[] # 'Limit Long Jumps'
+    'Exp':'Dist_PercConn_MeanDisconn,TimePenalties',
+    'Alg':['NSGA2','NSGA3'],
+    'F': ['Total Distance', 'Percentage Connectivity','Mean Disconnected Time', 'Time Penalties'],
+    'G': ['Limit Long Jumps','Limit Longest Subtour'],
+    'H': [] # 'Limit Long Jumps'
 }
 
 soo_model = {
-    'F':['Total Distance'],
-    'H': ['Limit Long Jumps'],
-    'G': ['Limit Cell per Drone']
+    'Total Distance':{
+        'Alg': ['GA'],
+        'F': ['Total Distance'],
+        'G': ['Limit Long Jumps', 'Limit Cell per Drone', 'Limit Longest Subtour'],
+        'H': []  # 'Limit Long Jumps'
+
+    },
+    'Percentage Connectivity': {
+        'Alg': ['GA'],
+        'F': ['Percentage Connectivity'],
+        'G': ['Limit Long Jumps', 'Limit Cell per Drone', 'Limit Longest Subtour'],
+        'H': []  # 'Limit Long Jumps'
+
+    },
+    'Mean Disconnected Time': {
+        'Alg': ['GA'],
+        'F': ['Mean Disconnected Time'],
+        'G': ['Limit Long Jumps', 'Limit Cell per Drone', 'Limit Longest Subtour'],
+        'H': []  # 'Limit Long Jumps'
+
+    }
+
 }
+
+distance_soo_model = {
+    'Exp': 'Dist',
+    'Alg':['GA'],
+    'F': ['Total Distance'],
+    'G': ['Limit Long Jumps','Limit Cell per Drone','Limit Longest Subtour'],
+    'H': []  # 'Limit Long Jumps'
+}
+connectivity_soo_model = {
+    'Exp': 'Conn',
+    'Alg':['GA'],
+    'F': ['Percentage Connectivity'],
+    'G': ['Limit Long Jumps','Limit Cell per Drone','Limit Longest Subtour'],
+    'H': []  # 'Limit Long Jumps'
+}
+meanMaxDisconnectivity_soo_model = {
+    'Exp': 'MeanDisconn',
+    'Alg':['GA'],
+    'F': ['Mean Disconnected Time'],
+    'G': ['Limit Long Jumps','Limit Cell per Drone','Limit Longest Subtour'],
+    'H': []  # 'Limit Long Jumps'
+}
+
 
 model_metric_info = {
     'Total Distance': get_total_distance,
@@ -34,6 +78,7 @@ model_metric_info = {
     'Max Disconnected Time': calculate_max_maxDisconnectedTime,
     'Mean Disconnected Time': calculate_mean_maxDisconnectedTime,
     'Limit Long Jumps': long_jumps_constr,
-    'Limit Cell per Drone': cell_per_drone_constr
+    'Limit Cell per Drone': cell_per_drone_constr,
+    'Limit Longest Subtour': longest_subtour_constr
     # 'Limit Max Visits': sol.max_visits_constr # Not Neccessary alongside limit long jumps cv
 }

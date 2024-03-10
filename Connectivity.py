@@ -38,11 +38,12 @@ def calculate_disconnected_timesteps(sol:PathSolution):
 
     time_steps = sol.path_matrix.shape[1]
 
-    disconnected_timesteps_matrix = np.zeros((info.Nd, time_steps), dtype=int)
+    disconnected_timesteps_matrix = np.zeros((info.Nd, sol.connectivity_matrix.shape[0]), dtype=int)
 
     drone_total_disconnected_timesteps = np.zeros(info.Nd, dtype=int)
 
     for i in range(info.Nd):
+        # print(disconnected_timesteps_matrix[i].shape, connected_nodes(sol,i + 1))
         disconnected_timesteps_matrix[i] = connected_nodes(sol,i + 1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
         drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
 
