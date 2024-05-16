@@ -28,9 +28,9 @@ class PathSampling(Sampling):
 
         for i in range(n_samples):
             # Random path
-            path = np.random.permutation(problem.info.min_visits * problem.info.Nc).tolist()
+            path = np.random.permutation(problem.info.min_visits * problem.info.number_of_cells).tolist()
             # Random start points
-            start_points = sorted(random.sample([i for i in range(1, len(path))], problem.info.Nd - 1))
+            start_points = sorted(random.sample([i for i in range(1, len(path))], problem.info.number_of_drones - 1))
             start_points.insert(0, 0)
             # print(f"Path: {path}\nStart Points: {start_points}")
             # print("----------------------------------------------------------------------------------------------------")

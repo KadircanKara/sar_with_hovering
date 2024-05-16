@@ -2,7 +2,7 @@ import numpy as np
 from math import floor, sqrt
 import copy
 
-from Time import *
+# from Time import *
 
 from PathSolution import *
 
@@ -13,6 +13,15 @@ def get_total_distance(sol:PathSolution):
         sol.total_distance = sum(sol.subtour_lengths.values())
     return sol.total_distance
 
+def get_subtour_range(sol:PathSolution):
+    if not sol.longest_subtour:
+        get_longest_subtour(sol)
+    if not sol.shortest_subtour:
+        get_shortest_subtour(sol)
+    sol.subtour_range = sol.longest_subtour - sol.shortest_subtour
+    return sol.subtour_range
+
+
 def get_longest_subtour(sol:PathSolution):
     if not sol.longest_subtour:
         if not sol.subtour_lengths:
@@ -20,20 +29,29 @@ def get_longest_subtour(sol:PathSolution):
         sol.longest_subtour = max(sol.subtour_lengths)
     return sol.longest_subtour
 
+def get_shortest_subtour(sol:PathSolution):
+    if not sol.shortest_subtour:
+        if not sol.subtour_lengths:
+            calculate_subtour_lengths(sol)
+        sol.shortest_subtour = min(sol.subtour_lengths)
+        # print(f"shortest subtour {sol.shortest_subtour}")
+    return sol.shortest_subtour
+
+
 def calculate_subtour_lengths(sol:PathSolution):
 
     if not sol.subtour_lengths:
 
         info = sol.info
 
-        path_matrix = sol.path_matrix
+        path_matrix = sol.real_time_path_matrix % sol.info.number_of_cells
 
         Nd, time_steps = path_matrix.shape
         Nd -= 1 # Remove base station
 
         subtour_lengths = dict()
 
-        for i in range(info.Nd):
+        for i in range(info.number_of_drones):
             drone_path = path_matrix[i+1]
             drone_dist = 0
             for j in range(time_steps-1):
@@ -49,11 +67,11 @@ def calculate_number_of_long_jumps(sol:PathSolution):
 
     if not sol.long_jump_violations :
         info = sol.info
-        path_matrix = sol.path_matrix
+        path_matrix = sol.real_time_path_matrix % sol.info.number_of_cells
         long_jump_violations = 0
-        for i in range(info.Nd):
+        for i in range(info.number_of_drones):
             for j in range(path_matrix.shape[1] - 1):
-                if info.D[path_matrix[i+1,j],path_matrix[i+1,j+1]] > info.A * sqrt(2):
+                if info.D[path_matrix[i+1,j],path_matrix[i+1,j+1]] > info.cell_side_length * sqrt(2):
                     long_jump_violations += 1
 
         sol.long_jump_violations = long_jump_violations
@@ -64,28 +82,54 @@ def calculate_number_of_long_jumps(sol:PathSolution):
 def cell_per_drone_constr(sol:PathSolution):
 
     info = sol.info
-    drone_dict = sol.drone_dict
 
     cells_per_drone = []
 
-    constr = info.Nc * info.min_visits // info.Nd
+    for i in range(info.Nd-1):
+        num_cells = sol.start_points[i+1] - sol.start_points[i]
+        cells_per_drone.append(num_cells)
+    cells_per_drone.append(info.min_visits*info.Nc-sol.start_points[-1])
 
-    for i in range(info.Nd):
-        drone_path = drone_dict[i][2:-2] # To eliminate -1 and 0 at the start and the end
-        cells_per_drone.append(len(drone_path))
+    constr = info.Nc * info.min_visits // info.number_of_drones
 
-    sol.cells_per_drone_constr = max(cells_per_drone) - min(cells_per_drone) - constr
+    return max(cells_per_drone) - min(cells_per_drone) - constr
 
-    # print("cell per drone cv:", max(cells_per_drone) - min(cells_per_drone) - constr)
+    # info = sol.info
 
-    return sol.cells_per_drone_constr
+    # cells_per_drone = []
 
-def long_jumps_constr(sol:PathSolution):
+    # constr = info.Nc * info.min_visits // info.Nd
+
+    # print(f"drone dict keys: {drone_dict.keys()}")
+
+    # for i in range(info.Nd):
+    #     drone_path = drone_dict[i][2:-2] # To eliminate -1 and 0 at the start and the end
+    #     cells_per_drone.append(len(drone_path))
+
+    # sol.cells_per_drone_constr = max(cells_per_drone) - min(cells_per_drone) - constr
+
+    # # print("cell per drone cv:", max(cells_per_drone) - min(cells_per_drone) - constr)
+
+    # return sol.cells_per_drone_constr
+
+def long_jumps_eq_constr(sol:PathSolution):
 
     if not sol.long_jump_violations :
         calculate_number_of_long_jumps(sol)
 
-    return sol.long_jump_violations - sol.info.Nd * sol.info.min_visits * 2
+    return sol.long_jump_violations / sol.info.number_of_drones * sol.info.min_visits
+
+def long_jumps_ieq_constr(sol:PathSolution, constr=40):
+
+    if not sol.long_jump_violations :
+        calculate_number_of_long_jumps(sol)
+
+    # constr = 2*sol.info.Nd
+
+    # return sol.long_jump_violations - sol.info.Nd * sol.info.min_visits * 2
+    return sol.long_jump_violations - constr
+
+
 
     # print("long jump cv:", long_jump_violations)
 
@@ -101,10 +145,21 @@ def long_jumps_constr(sol:PathSolution):
     #
     # return sol.long_jump_violations_constr
 
-def longest_subtour_constr(sol:PathSolution):
+def max_subtour_range_constr(sol:PathSolution):
+    if not sol.subtour_range:
+        get_subtour_range(sol)
+    return sol.subtour_range - sol.info.grid_size*(sol.info.cell_side_length*sqrt(2))
+
+def max_longest_subtour_constr(sol:PathSolution):
     if not sol.longest_subtour :
         get_longest_subtour(sol)
-    return sol.longest_subtour - sol.info.subtour_length_th
+    return sol.longest_subtour - sol.info.max_subtour_length_threshold
+
+def min_longest_subtour_constr(sol:PathSolution):
+    if not sol.shortest_subtour :
+        get_shortest_subtour(sol)
+    return - sol.shortest_subtour + sol.info.min_subtour_length_threshold
+
 
 '''# def limit_max_visits(sol):
 #     info = sol.info
@@ -127,7 +182,10 @@ def longest_subtour_constr(sol:PathSolution):
 
 
 
-def get_coords(cell, grid_size, A):
+def get_coords(sol:PathSolution, cell):
+
+    grid_size = sol.info.grid_size
+    A = sol.info.cell_side_length
 
     if cell == -1:
         x = -A / 2
@@ -162,6 +220,6 @@ def get_y_coords(self, cell, grid_size, A):
         y = -A / 2
     else:
         # y = ((cell % n) // grid_size + 0.5) * A
-        y = (cell // grid_size + 0.5) * self.info.A
+        y = (cell // grid_size + 0.5) * self.info.cell_side_length
     return y
 

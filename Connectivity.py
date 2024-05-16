@@ -2,20 +2,92 @@ import numpy as np
 from collections import deque
 from PathSolution import PathSolution
 
-def calculate_percentage_connectivity(sol:PathSolution):
-    if not sol.percentage_connectivity :
-        num_connected_drones_to_base = connected_nodes(sol, 0)
-        sol.percentage_connectivity = 100 * sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * sol.info.Nd)
-    return -sol.percentage_connectivity
-    # return (sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * info.Nd)) * 100
+# ISLAM'S DEFINITIONS
+
+def calculate_connectivity_to_base_percentage_matrix(sol : PathSolution):
+
+    info = sol.info
+
+    connectivity_to_base= sol.connectivity_to_base_matrix
+
+    time_slots = sol.time_slots
+
+    connectivity_to_base_percentage = np.zeros(time_slots)
+
+    for time in range(time_slots):
+        connectivity_to_base_percentage[time] = sum(connectivity_to_base[time, 1:])/(info.number_of_drones)
+
+    return connectivity_to_base_percentage
+
+
+def calculate_percentage_connectivity(sol : PathSolution):
+
+    info = sol.info
+
+    connectivity_to_base_percentage = calculate_connectivity_to_base_percentage_matrix(sol)
+
+    return -np.mean(connectivity_to_base_percentage[::1]) # sol.info.connectivity_period (after second :)
+
+#####################################################################################################
+
+def BFS(adj, sol:PathSolution):
+      
+    v = sol.info.Nd+1
+
+    ctb = []
+    start = 0
+    # Visited vector to so that a
+    # vertex is not visited more than
+    # once Initializing the vector to
+    # false as no vertex is visited at
+    # the beginning
+    visited = [False] * (sol.info.Nd+1)
+    q = [start]
+
+    # Set source as visited
+    visited[start] = True
+
+    while q:
+        vis = q[0]
+
+        # Print current node
+        ctb.append(vis)
+
+        q.pop(0)
+          
+        # For every adjacent vertex to
+        # the current vertex
+        for i in range(v):
+            if (adj[vis][i] == 1 and
+                  (not visited[i])):
+                        
+                # Push the adjacent node
+                # in the queue
+                q.append(i)
+                  
+                # set
+                visited[i] = True
+    
+    return ctb
+
+
+
+# def calculate_percentage_connectivity(sol:PathSolution):
+#     if not sol.percentage_connectivity :
+#         num_connected_drones_to_base = connected_nodes(sol, 0)
+#         sol.percentage_connectivity = 100 * sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * sol.info.number_of_drones)
+#     return -sol.percentage_connectivity
+#     # return (sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * info.Nd)) * 100
 
 def calculate_total_maxDisconnectedTime(sol:PathSolution):
     if not sol.disconnected_time_steps:
         calculate_disconnected_timesteps(sol)
     sol.total_maxDisconnectedTime = sum(sol.max_disconnected_timesteps)
     return sol.total_maxDisconnectedTime
+
 def calculate_max_maxDisconnectedTime(sol:PathSolution):
-    if not sol.disconnected_time_steps:
+    if sol.disconnected_time_steps is not None:
+    # if not sol.disconnected_time_steps:
         calculate_disconnected_timesteps(sol)
     sol.max_maxDisconnectedTime = max(sol.disconnected_time_steps)
     return sol.max_maxDisconnectedTime
@@ -36,13 +108,13 @@ def calculate_disconnected_timesteps(sol:PathSolution):
 
     info = sol.info
 
-    time_steps = sol.path_matrix.shape[1]
+    time_steps = sol.real_time_path_matrix.shape[1]
 
-    disconnected_timesteps_matrix = np.zeros((info.Nd, sol.connectivity_matrix.shape[0]), dtype=int)
+    disconnected_timesteps_matrix = np.zeros((info.number_of_drones, sol.connectivity_matrix.shape[0]), dtype=int)
 
-    drone_total_disconnected_timesteps = np.zeros(info.Nd, dtype=int)
+    drone_total_disconnected_timesteps = np.zeros(info.number_of_drones, dtype=int)
 
-    for i in range(info.Nd):
+    for i in range(info.number_of_drones):
         # print(disconnected_timesteps_matrix[i].shape, connected_nodes(sol,i + 1))
         disconnected_timesteps_matrix[i] = connected_nodes(sol,i + 1)  # To account for skipping the base station # 0,1 , 1,2 ... 7,8
         drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
@@ -81,7 +153,7 @@ def connected_nodes(sol:PathSolution, start_node):
     # start node: The node that we calculate connectivity to
 
     info = sol.info
-    num_nodes = info.Nn
+    num_nodes = info.number_of_nodes
 
     num_connected_drones = np.zeros(sol.connectivity_matrix.shape[0], dtype=int)
 

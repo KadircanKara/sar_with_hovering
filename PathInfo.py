@@ -8,25 +8,51 @@ from math import floor
 
 import pandas as pd
 
-default_input_parameters = {
+default_scenario = {
     'grid_size': 8,
-    'A': 50,
-    'Nd': 4,
-    'V': 2.5, # m/s
-    'rc': 2,  # 2 cells
+    'cell_side_length': 50,
+    'number_of_drones': 4,
+    'max_drone_speed': 2.5, # m/s
+    'comm_cell_range': 2,  # 2 cells
     'min_visits': 2,  # Minimum number of cell visits
     'max_visits':5, # Maximum number of cell visits
-    'Nt': 1,
-    'tar_cell':12,
-    'p': 0.99,
-    'q': 0.01,
-    'Th': 0.9,
+    'number_of_targets': 1,
+    'target_positions':12,
+    'true_detection_probability': 0.99,
+    'false_detection_probability': 0.01,
+    'detection_threshold': 0.9,
     'max_isolated_time': 0,
-    'hovering':True,
-    'realtime_connectivity':False,
-    'realtime_connectivity_stepsize':10
 }
 
+class PathInfo(object):
+    
+    def __init__(self, scenario_dict=None) -> None:
+
+        self.grid_size = scenario_dict['grid_size'] if scenario_dict else default_scenario['grid_size']
+        self.number_of_cells = self.grid_size ** 2
+        self.cell_side_length = scenario_dict['cell_side_length'] if scenario_dict else default_scenario['cell_side_length']
+        self.number_of_drones = scenario_dict['number_of_drones'] if scenario_dict else default_scenario['number_of_drones']
+        self.number_of_nodes = self.number_of_drones + 1
+        self.max_drone_speed = scenario_dict['max_drone_speed'] if scenario_dict else default_scenario['max_drone_speed']
+        self.comm_cell_range = scenario_dict['comm_cell_range'] if scenario_dict else default_scenario['comm_cell_range']
+        self.min_visits = scenario_dict['min_visits'] if scenario_dict else default_scenario['min_visits']
+        self.max_visits = scenario_dict['max_visits'] if scenario_dict else default_scenario['max_visits']
+        self.number_of_targets = scenario_dict['number_of_targets'] if scenario_dict else default_scenario['number_of_targets']
+        self.target_positions = scenario_dict['target_positions'] if scenario_dict else default_scenario['target_positions']
+        self.true_detection_probability = scenario_dict['true_detection_probability'] if scenario_dict else default_scenario['true_detection_probability']
+        self.false_detection_probability = scenario_dict['false_detection_probability'] if scenario_dict else default_scenario['false_detection_probability']
+        self.detection_threshold = scenario_dict['detection_threshold'] if scenario_dict else default_scenario['detection_threshold']
+
+        P = [[i, j] for i in range(self.grid_size) for j in range(self.grid_size)]
+        P.append([-1, -1])
+        self.D = distance.cdist(P, P) * self.cell_side_length
+
+        self.min_subtour_length_threshold = (self.number_of_cells * self.min_visits / self.number_of_drones)*self.cell_side_length
+        self.max_subtour_length_threshold = (self.number_of_cells * self.min_visits / self.number_of_drones)*self.cell_side_length # self.min_subtour_length_threshold + 20
+
+
+
+'''
 class PathInfo:
     def __init__(self, grid_size=None, A=None, Nd=None, V=None, rc=None, min_visits=None, max_visits=None, Nt=None, tar_cell=None, p=None, q=None,
                  Th=None, max_isolated_time=None, hovering=True, realtime_connectivity=False, realtime_connectivity_stepsize=None):
@@ -49,7 +75,8 @@ class PathInfo:
         self.realtime_connectivity = realtime_connectivity if realtime_connectivity else default_input_parameters['realtime_connectivity']
         self.realtime_connectivity_stepsize = realtime_connectivity_stepsize if realtime_connectivity_stepsize else default_input_parameters['realtime_connectivity_stepsize']
 
-        self.subtour_length_th = (int(round(self.Nc * self.max_visits/self.Nd)^2))*self.A
+        # self.subtour_length_th = (int(round(self.Nc * self.max_visits/self.Nd)^2))*self.A
+        self.subtour_length_th = 1000
 
 
 
@@ -60,3 +87,4 @@ class PathInfo:
 
 # x = PathInfo()
 # print(pd.DataFrame(x.D))
+'''
