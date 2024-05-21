@@ -199,7 +199,7 @@ class PathCrossover(Crossover):
                     Y[0,i,0] = scx(X[0, i, 0],X[1, i, 0])
                 else :
                     # OX
-                    start, end = random_sequence(problem.info.Nc)
+                    start, end = random_sequence(problem.info.number_of_cells)
                     path_cross_1 = ox(path_1, path_2, seq=(start, end), shift=self.shift)
                     path_cross_2 = ox(path_2, path_1, seq=(start, end), shift=self.shift)
                     # print(f"path cross 1: {path_cross_1}, path cross 2: {path_cross_2}")

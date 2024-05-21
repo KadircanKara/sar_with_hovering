@@ -1,3 +1,4 @@
+from typing import Any
 from PathSampling import *
 from PathMutation import *
 from PathCrossover import *
@@ -127,4 +128,23 @@ algorithm_dict = {
 
 }
 
+class PathAlgorithm(object):
 
+    def __init__(self, algorithm) -> None:
+        
+        self.algorithm = algorithm
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+                
+        if self.algorithm == 'NSGA3':
+            return algorithm_dict['NSGA3']
+        
+        elif self.algorithm == 'MOEAD':
+            return algorithm_dict['MOEAD']
+        
+        else:
+            return algorithm_dict['NSGA2']
+
+
+test = PathAlgorithm('NSGA2')()
+print(test)
