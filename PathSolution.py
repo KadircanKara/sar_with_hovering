@@ -111,8 +111,8 @@ class PathSolution():
 
 
         # Call PathSolution funumber_of_cellstions
-        # self.get_pathplan() # Calculates drone dict and path matrix (not interpolated, directly from the path sequenumber_of_cellse and start points)
-        self.get_real_time_path_matrix_with_hovering()
+        self.get_pathplan() # Calculates drone dict and path matrix (not interpolated, directly from the path sequenumber_of_cellse and start points)
+        # self.get_real_time_path_matrix_with_hovering()
         self.calculate_connectivity_matrix()
         self.calculate_connectivity_to_base_matrix()
         self.calculate_cell_visit_steps()
@@ -282,6 +282,7 @@ class PathSolution():
 
 
     def get_pathplan(self):
+
         self.drone_dict_generated = True
         self.drone_dict = dict()
         self.time_steps = 0
@@ -315,82 +316,104 @@ class PathSolution():
                 filler = np.array([-1]*len_diff)
                 self.path_matrix[i+1] = np.hstack( (self.drone_dict[i] , filler)  )
 
-        # print(f"PATH MATRIX:\n{pd.DataFrame(self.path_matrix).to_string(inumber_of_dronesex=False)}")
+        self.real_time_path_matrix = self.path_matrix
+
+        # APPLY HOVERING TO DRONES WITH SHORTER PATHS
+        path_lens = [len(path) for path in list(self.drone_dict.values())]
+        hovering_drone_ids = [path_lens.index(i) for i in path_lens if i != min(path_lens)]
+        print("----------------------------------------------------------")
+        for drone in hovering_drone_ids:
+            print(f"Drone {drone}:")
+            # APPLY HOVERING
+            path_without_hovering = self.real_time_path_matrix[i+1].copy()
+            # Find last cell
+            hovering_cell_idx = np.where(path_without_hovering==-1)[0][1] - 1
+            hovering_cell = path_without_hovering[hovering_cell_idx]
+            hovering_component = np.array([hovering_cell] * (len(path_without_hovering) - hovering_cell_idx - 1))
+            path_with_hovering = path_without_hovering.copy()
+            path_with_hovering[hovering_cell_idx:len(path_without_hovering)-1] = hovering_component
+            self.real_time_path_matrix[i+1] = path_with_hovering
+            print(f"Path Without Hovering: {path_without_hovering}\nPath with Hovring:{path_with_hovering}")
+        print("----------------------------------------------------------")
+            # self.real_time_path_matrix[i+1] = np.hstack((path_with_hovering[:hovering_cell_idx], np.array([hovering_cell]*(len(path_with_hovering)-hovering_cell_idx-1))))
+        # print(f"PATH MATRIX:\n{pd.DataFrame(self.real_time_path_matrix).to_string(index=False)}")
+        print(f"Path Matrix:\n{self.real_time_path_matrix}")
+
+        # XY COORDINATES DON'T ENABLE
+
+        # # GET XY DICT
+        # for i in range(1, self.time_steps):
+        #     current_step_cells , next_step_cells = self.path_matrix[1:,i-1].tolist() , self.path_matrix[1:,i].tolist()
+        #     current_step_coords = list(map(self.get_coords, current_step_cells))
+        #     next_step_coords = list(map(self.get_coords, next_step_cells))
+        #     coord_diffs = [next_step_coords[j] - current_step_coords[j] for j in range(info.number_of_drones)]
+        #     thetas = [atan2(j[1],j[0]) for j in coord_diffs]
+        #     current_to_next_step_x_coords = [ np.arange(current_step_coords[j][0], next_step_coords[j][0], self.info.V * cos(thetas[j])) if current_step_coords[j][0] != next_step_coords[j][0] else np.array([current_step_coords[j][0]]) for j in range(info.number_of_drones) ]
+        #     current_to_next_step_y_coords = [ np.arange(current_step_coords[j][1], next_step_coords[j][1], self.info.V * sin(thetas[j])) if current_step_coords[j][1] != next_step_coords[j][1] else np.array([current_step_coords[j][1]]) for j in range(info.number_of_drones) ]
+        #     for j in range(info.number_of_drones):
+        #         x_coords, y_coords = current_to_next_step_x_coords[j], current_to_next_step_y_coords[j]
+        #         if len(x_coords) != len(y_coords):
+        #             xy_diff = abs(len(x_coords) - len(y_coords))
+        #             if len(x_coords) > len(y_coords): # Fill y
+        #                 current_to_next_step_y_coords[j] = np.hstack((current_to_next_step_y_coords[j], np.array([y_coords[-1]]*xy_diff)))
+        #             else: # Fill x
+        #                 current_to_next_step_x_coords[j] = np.hstack((current_to_next_step_x_coords[j], np.array([x_coords[-1]]*xy_diff)))
+        #         else:
+        #             continue
 
 
-        # GET XY DICT
-        for i in range(1, self.time_steps):
-            current_step_cells , next_step_cells = self.path_matrix[1:,i-1].tolist() , self.path_matrix[1:,i].tolist()
-            current_step_coords = list(map(self.get_coords, current_step_cells))
-            next_step_coords = list(map(self.get_coords, next_step_cells))
-            coord_diffs = [next_step_coords[j] - current_step_coords[j] for j in range(info.number_of_drones)]
-            thetas = [atan2(j[1],j[0]) for j in coord_diffs]
-            current_to_next_step_x_coords = [ np.arange(current_step_coords[j][0], next_step_coords[j][0], self.info.V * cos(thetas[j])) if current_step_coords[j][0] != next_step_coords[j][0] else np.array([current_step_coords[j][0]]) for j in range(info.number_of_drones) ]
-            current_to_next_step_y_coords = [ np.arange(current_step_coords[j][1], next_step_coords[j][1], self.info.V * sin(thetas[j])) if current_step_coords[j][1] != next_step_coords[j][1] else np.array([current_step_coords[j][1]]) for j in range(info.number_of_drones) ]
-            for j in range(info.number_of_drones):
-                x_coords, y_coords = current_to_next_step_x_coords[j], current_to_next_step_y_coords[j]
-                if len(x_coords) != len(y_coords):
-                    xy_diff = abs(len(x_coords) - len(y_coords))
-                    if len(x_coords) > len(y_coords): # Fill y
-                        current_to_next_step_y_coords[j] = np.hstack((current_to_next_step_y_coords[j], np.array([y_coords[-1]]*xy_diff)))
-                    else: # Fill x
-                        current_to_next_step_x_coords[j] = np.hstack((current_to_next_step_x_coords[j], np.array([x_coords[-1]]*xy_diff)))
-                else:
-                    continue
+        #     if self.hovering:
+        #         step_lengths = [len(current_to_next_step_x_coords[j]) for j in range(info.number_of_drones)]
+        #         max_step_dist = max(step_lengths)
+        #         longest_step_drone = step_lengths.inumber_of_dronesex(max_step_dist)  # Identify drone with longest step
+        #         current_to_next_step_x_coords = [np.hstack((current_to_next_step_x_coords[j] , np.array([current_to_next_step_x_coords[j][-1]]*(max_step_dist - len(current_to_next_step_x_coords[j]))))) if j != longest_step_drone else current_to_next_step_x_coords[j] for j in range(info.number_of_drones)]
+        #         current_to_next_step_y_coords = [np.hstack((current_to_next_step_y_coords[j] , np.array([current_to_next_step_y_coords[j][-1]]*(max_step_dist - len(current_to_next_step_y_coords[j]))))) if j != longest_step_drone else current_to_next_step_y_coords[j] for j in range(info.number_of_drones)]
+        #     # self.x_coords_dict[j].append(current_to_next_step_x_coords[j]) for j in range(info.number_of_drones)
+        #     self.x_coords_list = [current_to_next_step_x_coords[j] if i==1 else np.hstack((self.x_coords_list[j],current_to_next_step_x_coords[j])) for j in range(info.number_of_drones)]
+        #     self.y_coords_list = [current_to_next_step_y_coords[j] if i==1 else np.hstack((self.y_coords_list[j],current_to_next_step_y_coords[j])) for j in range(info.number_of_drones)]
 
+        # self.drone_timeslots = [len(x) for x in self.x_coords_list]
+        # self.time_slots = max(self.drone_timeslots)
 
-            if self.hovering:
-                step_lengths = [len(current_to_next_step_x_coords[j]) for j in range(info.number_of_drones)]
-                max_step_dist = max(step_lengths)
-                longest_step_drone = step_lengths.inumber_of_dronesex(max_step_dist)  # Identify drone with longest step
-                current_to_next_step_x_coords = [np.hstack((current_to_next_step_x_coords[j] , np.array([current_to_next_step_x_coords[j][-1]]*(max_step_dist - len(current_to_next_step_x_coords[j]))))) if j != longest_step_drone else current_to_next_step_x_coords[j] for j in range(info.number_of_drones)]
-                current_to_next_step_y_coords = [np.hstack((current_to_next_step_y_coords[j] , np.array([current_to_next_step_y_coords[j][-1]]*(max_step_dist - len(current_to_next_step_y_coords[j]))))) if j != longest_step_drone else current_to_next_step_y_coords[j] for j in range(info.number_of_drones)]
-            # self.x_coords_dict[j].append(current_to_next_step_x_coords[j]) for j in range(info.number_of_drones)
-            self.x_coords_list = [current_to_next_step_x_coords[j] if i==1 else np.hstack((self.x_coords_list[j],current_to_next_step_x_coords[j])) for j in range(info.number_of_drones)]
-            self.y_coords_list = [current_to_next_step_y_coords[j] if i==1 else np.hstack((self.y_coords_list[j],current_to_next_step_y_coords[j])) for j in range(info.number_of_drones)]
+        # # Initialize xy matrix
+        # x_sink,y_sink = self.get_coords(-1)
+        # self.x_matrix = np.full((info.number_of_drones + 1, self.time_slots), x_sink)  # number_of_drones+1 rows in order to inumber_of_cellsorporate base station
+        # self.y_matrix = self.x_matrix.copy()
+        # self.realtime_path_matrix = self.x_matrix.copy()
+        # self.realtime_path_matrix.astype(int)
+        # self.realtime_path_matrix[:, :] = -1
+        # interpolated_path_dict = dict()
+        # interpolated_path_max_len = 0
 
-        self.drone_timeslots = [len(x) for x in self.x_coords_list]
-        self.time_slots = max(self.drone_timeslots)
+        # # print(f"path matrix: {self.path_matrix}")
 
-        # Initialize xy matrix
-        x_sink,y_sink = self.get_coords(-1)
-        self.x_matrix = np.full((info.number_of_drones + 1, self.time_slots), x_sink)  # number_of_drones+1 rows in order to inumber_of_cellsorporate base station
-        self.y_matrix = self.x_matrix.copy()
-        self.realtime_path_matrix = self.x_matrix.copy()
-        self.realtime_path_matrix.astype(int)
-        self.realtime_path_matrix[:, :] = -1
-        interpolated_path_dict = dict()
-        interpolated_path_max_len = 0
+        # for i in range(info.number_of_drones):
+        #     self.x_matrix[i + 1] = np.hstack((self.x_coords_list[i], np.array([x_sink] * (self.time_slots - self.drone_timeslots[i]))))
+        #     self.y_matrix[i + 1] = np.hstack((self.y_coords_list[i], np.array([y_sink] * (self.time_slots - self.drone_timeslots[i]))))
+        #     # drone_xy_coords = list(zip(self.x_matrix[j + 1], self.y_matrix[j + 1]))
+        #     self.realtime_path_matrix[i + 1] = [self.get_city(k) for k in list(zip(self.x_matrix[i + 1], self.y_matrix[i + 1]))]
+        #     interpolated_path_dict[i] = []
+        #     for j in range(self.time_slots - 1):
+        #         if self.realtime_path_matrix[i + 1][j] != self.realtime_path_matrix[i + 1][j + 1]:
+        #             interpolated_path_dict[i].append(self.realtime_path_matrix[i + 1][j])
+        #     # print("----------------------------------------------------------------------------------------------------")
+        #     # print(f"Drone {i+1}")
+        #     # print("----------------------------------------------------------------------------------------------------")
+        #     # print(f"matrix list: {self.realtime_path_matrix[i + 1]}\number_of_dronesict list: {interpolated_path_dict[i]}")
 
-        # print(f"path matrix: {self.path_matrix}")
+        #     if  self.realtime_path_matrix[i + 1][-1] != interpolated_path_dict[i][-1]:
+        #         interpolated_path_dict[i].append(self.realtime_path_matrix[i + 1][-1])
+        #     if len(interpolated_path_dict[i]) > interpolated_path_max_len:
+        #         interpolated_path_max_len = len(interpolated_path_dict[i])
 
-        for i in range(info.number_of_drones):
-            self.x_matrix[i + 1] = np.hstack((self.x_coords_list[i], np.array([x_sink] * (self.time_slots - self.drone_timeslots[i]))))
-            self.y_matrix[i + 1] = np.hstack((self.y_coords_list[i], np.array([y_sink] * (self.time_slots - self.drone_timeslots[i]))))
-            # drone_xy_coords = list(zip(self.x_matrix[j + 1], self.y_matrix[j + 1]))
-            self.realtime_path_matrix[i + 1] = [self.get_city(k) for k in list(zip(self.x_matrix[i + 1], self.y_matrix[i + 1]))]
-            interpolated_path_dict[i] = []
-            for j in range(self.time_slots - 1):
-                if self.realtime_path_matrix[i + 1][j] != self.realtime_path_matrix[i + 1][j + 1]:
-                    interpolated_path_dict[i].append(self.realtime_path_matrix[i + 1][j])
-            # print("----------------------------------------------------------------------------------------------------")
-            # print(f"Drone {i+1}")
-            # print("----------------------------------------------------------------------------------------------------")
-            # print(f"matrix list: {self.realtime_path_matrix[i + 1]}\number_of_dronesict list: {interpolated_path_dict[i]}")
+        # # Interpolated Path Matrix
+        # self.interpolated_path_matrix = np.full((info.number_of_drones+1,interpolated_path_max_len), -1)
+        # for i in range(info.number_of_drones):
+        #     interpolated_drone_path = interpolated_path_dict[i]
+        #     len_diff = abs(len(interpolated_drone_path) - interpolated_path_max_len)
+        #     self.interpolated_path_matrix[i+1] = interpolated_drone_path + [interpolated_drone_path[-1]]*len_diff
 
-            if  self.realtime_path_matrix[i + 1][-1] != interpolated_path_dict[i][-1]:
-                interpolated_path_dict[i].append(self.realtime_path_matrix[i + 1][-1])
-            if len(interpolated_path_dict[i]) > interpolated_path_max_len:
-                interpolated_path_max_len = len(interpolated_path_dict[i])
-
-        # Interpolated Path Matrix
-        self.interpolated_path_matrix = np.full((info.number_of_drones+1,interpolated_path_max_len), -1)
-        for i in range(info.number_of_drones):
-            interpolated_drone_path = interpolated_path_dict[i]
-            len_diff = abs(len(interpolated_drone_path) - interpolated_path_max_len)
-            self.interpolated_path_matrix[i+1] = interpolated_drone_path + [interpolated_drone_path[-1]]*len_diff
-
-        self.realtime_path_matrix = self.realtime_path_matrix.astype(int)
+        # self.realtime_path_matrix = self.realtime_path_matrix.astype(int)
 
 
     def get_coords(self, cell):

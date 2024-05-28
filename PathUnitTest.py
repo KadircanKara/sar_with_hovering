@@ -7,7 +7,7 @@ from pymoo.operators.mutation.nom import NoMutation
 from pymoo.core.duplicate import NoDuplicateElimination
 from pymoo.optimize import minimize
 from PathResults import export_to_matlab
-from PathAnimation import *
+# from PathAnimation import *
 from Time import *
 from Abbreviations import abbreviations
 
@@ -101,7 +101,7 @@ class PathUnitTest(object):
 
         res = minimize(problem=PathProblem(self.scenario_info, self.model),
                         algorithm=PathAlgorithm(self.algorithm)(),# algorithm_dict[alg],
-                        termination=('n_gen',4000),
+                        termination=('n_gen',1000),
                         seed=1,
                         # output=PathOutput(PathProblem(info)),
                         verbose=True,
@@ -160,8 +160,8 @@ class PathUnitTest(object):
 test = PathUnitTest()
 F,X = test('algorithm')
 
-anim = PathAnimation()
-anim('simple')
+# anim = PathAnimation()
+# anim('simple')
 
 
 

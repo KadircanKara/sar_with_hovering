@@ -6,7 +6,7 @@ from scipy import io
 from PathOptimizationModel import moo_model, distance_soo_model
 from PathSolution import PathSolution
 from Time import get_real_paths
-from Connectivity import hovering_connectivity_constraint
+from Connectivity import *
 
 matlab_filepath = '/Users/kadircan/Documents/MATLAB/Thesis/ResultsTest'
 
@@ -35,4 +35,4 @@ mean_disconn_sol:PathSolution = sols[best_mean_disconn_idx][0]
 max_disconn_sol:PathSolution = sols[best_max_disconn_idx][0]
 distance_sol:PathSolution = sols[best_distance_idx][0]
 
-hovering_connectivity_constraint(conn_sol)
+enforce_hovering_connectivity(conn_sol)

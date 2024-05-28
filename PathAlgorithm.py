@@ -27,7 +27,7 @@ from pymoo.algorithms.soo.nonconvex.pso import PSO
 
 
 path_sampling = PathSampling()
-path_mutation = PathMutation()
+path_mutation = NoMutation()
 path_crossover = PathCrossover()
 path_eliminate_duplicates = NoDuplicateElimination()
 path_repair = NoRepair()

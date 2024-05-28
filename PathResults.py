@@ -48,7 +48,7 @@ def export_to_matlab(path, model, scenario, obj_name, obj_values):
         io.savemat(f'{path}{scenario}-Mid{obj_name}-x_matrix.mat',{'array': x_matrix})
         io.savemat(f'{path}{scenario}-Mid{obj_name}-y_matrix.mat',{'array': y_matrix})
 
-path = '/Users/kadircan/Documents/MATLAB/Thesis/HoveringPathResults'
+'''path = '/Users/kadircan/Documents/MATLAB/Thesis/HoveringPathResults'
 model = moo_model
 scenario = 'g_8_a_50_n_4_v_2.5_r_4_minv_5_maxv_5_Nt_1_tarPos_12_ptdet_0.99_pfdet_0.01_detTh_0.9_maxIso_0'
 obj_name = "Percentage Connectivity"
@@ -57,7 +57,7 @@ obj_values = np.load(f"Results/F/{scenario}_ObjectiveValues.npy", allow_pickle=T
 export_to_matlab(path, model, scenario, obj_name, obj_values)
 
 print("DONE !!!")
-
+'''
 
 
 

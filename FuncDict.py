@@ -16,6 +16,7 @@ model_metric_info = {
     'Limit Cell per Drone': cell_per_drone_constr,
     'Limit Max Longest Subtour': max_longest_subtour_constr,
     'Limit Min Longest Subtour': min_longest_subtour_constr,
-    'Limit Subtour Range': max_subtour_range_constr
+    'Limit Subtour Range': max_subtour_range_constr,
+    'Enforce Hovering Connectivity':enforce_hovering_connectivity
     # 'Limit Max Visits': sol.max_visits_constr # Not Neccessary alongside limit long jumps cv
 }

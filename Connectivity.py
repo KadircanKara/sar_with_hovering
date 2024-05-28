@@ -4,31 +4,59 @@ from PathSolution import PathSolution
 from Time import get_path_matrix
 
 # At Least 1 Hovering Drone Connected to BS Constraint
-def hovering_connectivity_constraint(sol:PathSolution):
+def enforce_hovering_connectivity(sol:PathSolution):
+    conn_weight = 0.6
+    dist_weight = 1-conn_weight
     info = sol.info
-    relay_conn_score = 0
-    relay_dist_score = 0
+    hovering_threshold = 5
+    # relay_conn_score = 0
+    # relay_dist_score = 0
     # Get path matrix
     drone_path_matrix = get_path_matrix(sol)[1:,:]
     print(f"Path Matrix:\n{drone_path_matrix}")
     # Get unique cell counts
     num_unique_cells = np.array([len(np.unique(row)) for row in drone_path_matrix])
-    print(f"Number of Unique Cells:\n{num_unique_cells}")
+    # print(f"Number of Unique Cells:\n{num_unique_cells}")
     # Get drone id with the least unique cells (Most Hovering Drone)
     main_hovering_drone = np.argmin(num_unique_cells)
-    hovering_drones = np.array( [i for i in range(len(num_unique_cells)) if num_unique_cells[i] < 10] )
-    print(f"All Hovering Drone IDs: {hovering_drones}") # Use Later
-    print(f"Main Hovering Drone ID: {main_hovering_drone}")
+    hovering_drones = np.array( [i for i in range(len(num_unique_cells)) if num_unique_cells[i] < hovering_threshold] )
+    # print(f"All Hovering Drone IDs: {hovering_drones}") # Use Later
+    # print(f"Main Hovering Drone ID: {main_hovering_drone}")
+    # Calculate Hovering Drones' Connectivity and Distance Scores to BS
+    conn_scores = []
+    dist_scores = []
+    for drone in hovering_drones:
+        conn_score = 0
+        dist_score = 0
+        drone_path = drone_path_matrix[drone]
+        visited_cells, visit_counts = np.unique(drone_path, return_counts=True)
+        for i,cell in enumerate(visited_cells):
+            dist_to_bs = info.D[-1,cell]
+            conn_score += int(dist_to_bs <= info.comm_cell_range * info.cell_side_length) * visit_counts[i]
+            dist_score += dist_to_bs * visit_counts[i]
+        conn_score /= len(drone_path)
+        conn_scores.append(conn_score)
+        dist_scores.append(dist_score)
+    avg_conn_violation = -np.mean(conn_scores)
+    avg_dist_violation = np.mean(dist_scores)
+
+    # print(avg_conn_violation, avg_dist_violation)
+
+
+    return avg_conn_violation * conn_weight + avg_dist_violation * dist_weight
+
     # Calculate Main Hovering Drone's Connectivity to BS
     main_hovering_drone_path = drone_path_matrix[main_hovering_drone]
-    print(f"Path Matrix:\n{drone_path_matrix}")
+    # print(f"Path Matrix:\n{drone_path_matrix}")
     print(f"Main Hovering Drone Path: {main_hovering_drone_path}")
-    main_hovering_drone_unique_cells = np.unique(main_hovering_drone_path)
-    for cell in main_hovering_drone_unique_cells:
-        cell_to_bs_dist = info.D[-1,cell]
-        if cell_to_bs_dist <= info.comm_cell_range * info.cell_side_length:
-            relay_conn_score += 1 # Add 1 to relay_conn_score if all cells visited by the main hovering drone are connected to BS
-        relay_dist_score += cell_to_bs_dist
+
+    # main_hovering_drone_unique_cells = np.unique(main_hovering_drone_path)
+    # for cell in main_hovering_drone_unique_cells:
+    #     cell_to_bs_dist = info.D[-1,cell]
+    #     if cell_to_bs_dist <= info.comm_cell_range * info.cell_side_length:
+    #         relay_conn_score += 1 # Add 1 to relay_conn_score if all cells visited by the main hovering drone are connected to BS
+    #     relay_dist_score += cell_to_bs_dist
+
 
 
 
@@ -111,20 +139,20 @@ def BFS(adj, sol:PathSolution):
 #     # return (sum(num_connected_drones_to_base) / (len(num_connected_drones_to_base) * info.Nd)) * 100
 
 def calculate_total_maxDisconnectedTime(sol:PathSolution):
-    if not sol.disconnected_time_steps:
+    if sol.disconnected_time_steps is None:
         calculate_disconnected_timesteps(sol)
     sol.total_maxDisconnectedTime = sum(sol.max_disconnected_timesteps)
     return sol.total_maxDisconnectedTime
 
 def calculate_max_maxDisconnectedTime(sol:PathSolution):
-    if sol.disconnected_time_steps is not None:
+    if sol.disconnected_time_steps is None:
     # if not sol.disconnected_time_steps:
         calculate_disconnected_timesteps(sol)
     sol.max_maxDisconnectedTime = max(sol.disconnected_time_steps)
     return sol.max_maxDisconnectedTime
 
 def calculate_mean_maxDisconnectedTime(sol:PathSolution):
-    if not sol.disconnected_time_steps:
+    if sol.disconnected_time_steps is None:
         calculate_disconnected_timesteps(sol)
     sol.mean_maxDisconnectedTime = np.mean(sol.disconnected_time_steps)
     return sol.mean_maxDisconnectedTime
@@ -151,6 +179,8 @@ def calculate_disconnected_timesteps(sol:PathSolution):
         drone_total_disconnected_timesteps[i] = len(np.where(disconnected_timesteps_matrix[i] == 0)[0])
 
     sol.disconnected_time_steps = drone_total_disconnected_timesteps
+
+    # print(f"Disconnected Time Steps: {sol.disconnected_time_steps}")
 
     return sol.disconnected_time_steps
 
